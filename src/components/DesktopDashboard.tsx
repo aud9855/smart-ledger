@@ -36,6 +36,8 @@ interface DesktopDashboardProps {
   onEditTransaction: (tx: Transaction) => void;
   onDeleteTransaction: (id: string) => void;
   currentMonth: string;
+  periodStart: Date;
+  periodEnd: Date; // 미포함
 }
 
 export const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
@@ -46,6 +48,8 @@ export const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
   onEditTransaction,
   onDeleteTransaction,
   currentMonth,
+  periodStart,
+  periodEnd,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'expense' | 'income'>('all');
@@ -100,29 +104,34 @@ export const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
       .sort((a, b) => b.value - a.value);
   }, [transactions]);
 
-  // 일별 지출/수입 집계 (바 차트 데이터)
+  // 일별 지출/수입 집계 (바 차트 데이터) - 기간이 두 달에 걸치면 'M/D'로 표시
   const dailyChartData = useMemo(() => {
-    const [year, month] = currentMonth.split('-').map(Number);
-    const daysInMonth = new Date(year, month, 0).getDate();
-    const dataMap: Record<number, { day: string; expense: number; income: number }> = {};
+    const lastDay = new Date(periodEnd);
+    lastDay.setDate(lastDay.getDate() - 1);
+    const isSingleMonth = periodStart.getMonth() === lastDay.getMonth();
+    const dataMap = new Map<string, { day: string; expense: number; income: number }>();
 
-    for (let d = 1; d <= daysInMonth; d++) {
-      dataMap[d] = { day: `${d}일`, expense: 0, income: 0 };
+    for (const d = new Date(periodStart); d < periodEnd; d.setDate(d.getDate() + 1)) {
+      dataMap.set(toLocalDateKey(d), {
+        day: isSingleMonth ? `${d.getDate()}일` : `${d.getMonth() + 1}/${d.getDate()}`,
+        expense: 0,
+        income: 0,
+      });
     }
 
     transactions.forEach(t => {
-      const dayNum = new Date(t.transacted_at).getDate();
-      if (dataMap[dayNum]) {
+      const entry = dataMap.get(toLocalDateKey(t.transacted_at));
+      if (entry) {
         if (t.type === 'expense') {
-          dataMap[dayNum].expense += t.amount;
+          entry.expense += t.amount;
         } else {
-          dataMap[dayNum].income += t.amount;
+          entry.income += t.amount;
         }
       }
     });
 
-    return Object.values(dataMap);
-  }, [transactions, currentMonth]);
+    return Array.from(dataMap.values());
+  }, [transactions, periodStart, periodEnd]);
 
   // 필터링된 거래 목록
   const filteredTransactions = useMemo(() => {

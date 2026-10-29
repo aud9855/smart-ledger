@@ -1,8 +1,16 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Transaction, Category, TransactionType, PaymentMethod } from './types';
 import {
+  PeriodMode,
+  PaydayOverrides,
+  getCurrentPeriodLabel,
+  getPeriodRange,
+} from './lib/date';
+import {
   supabase,
-  getTransactionsByMonth,
+  getTransactionsInRange,
+  getPaydayOverrides,
+  setPaydayOverride,
   createTransaction,
   updateTransaction,
   deleteTransaction,
@@ -17,15 +25,34 @@ import { DesktopDashboard } from './components/DesktopDashboard';
 import { TransactionModal } from './components/TransactionModal';
 import { PinLockModal } from './components/PinLockModal';
 import { PwaInstallPrompt } from './components/PwaInstallPrompt';
+import { PeriodSettingsModal } from './components/PeriodSettingsModal';
 import { PlusCircle, ListOrdered, Loader2 } from 'lucide-react';
 
+const PERIOD_MODE_KEY = 'smart_ledger_period_mode';
+
+/** 집계 기간 방식 (기기별 설정, 기본: 월급날 기준) */
+function loadPeriodMode(): PeriodMode {
+  try {
+    return localStorage.getItem(PERIOD_MODE_KEY) === 'calendar' ? 'calendar' : 'payday';
+  } catch {
+    return 'payday';
+  }
+}
+
 export const App: React.FC = () => {
-  const [currentMonth, setCurrentMonth] = useState<string>(() => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    return `${year}-${month}`;
-  });
+  const [periodMode, setPeriodMode] = useState<PeriodMode>(loadPeriodMode);
+  const [paydayOverrides, setPaydayOverrides] = useState<PaydayOverrides>({});
+  const [currentMonth, setCurrentMonth] = useState<string>(() =>
+    getCurrentPeriodLabel(loadPeriodMode(), {})
+  );
+  // 사용자가 직접 월을 넘겼는지: 월급날 수정 내역이 늦게 로드돼도 보던 기간을 바꾸지 않기 위함
+  const monthTouchedRef = useRef(false);
+  const [isPeriodSettingsOpen, setIsPeriodSettingsOpen] = useState(false);
+
+  const periodRange = useMemo(
+    () => getPeriodRange(currentMonth, periodMode, paydayOverrides),
+    [currentMonth, periodMode, paydayOverrides]
+  );
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -68,6 +95,13 @@ export const App: React.FC = () => {
       }
     }
     initCategories();
+
+    getPaydayOverrides().then(overrides => {
+      setPaydayOverrides(overrides);
+      if (!monthTouchedRef.current) {
+        setCurrentMonth(getCurrentPeriodLabel(loadPeriodMode(), overrides));
+      }
+    });
   }, []);
 
   // 가장 최근 조회 요청 번호: 월을 빠르게 넘길 때 늦게 도착한 이전 달 응답이 덮어쓰지 않도록 함
@@ -80,7 +114,7 @@ export const App: React.FC = () => {
       if (showSpinner) setLoading(true);
       try {
         const [txList, budgetAmount] = await Promise.all([
-          getTransactionsByMonth(currentMonth),
+          getTransactionsInRange(periodRange.start, periodRange.end),
           getBudgetByMonth(currentMonth),
         ]);
         if (requestId !== latestRequestRef.current) return;
@@ -92,7 +126,7 @@ export const App: React.FC = () => {
         if (requestId === latestRequestRef.current) setLoading(false);
       }
     },
-    [currentMonth]
+    [currentMonth, periodRange]
   );
 
   const refreshData = useCallback(() => fetchMonthData(false), [fetchMonthData]);
@@ -154,6 +188,32 @@ export const App: React.FC = () => {
     setBudget(amount);
   };
 
+  const handleChangeMonth = (month: string) => {
+    monthTouchedRef.current = true;
+    setCurrentMonth(month);
+  };
+
+  // 방식을 바꾸면 오늘이 속한 기간으로 이동
+  const handleChangePeriodMode = (mode: PeriodMode) => {
+    try {
+      localStorage.setItem(PERIOD_MODE_KEY, mode);
+    } catch {
+      // 저장 실패 시 이번 세션에서만 적용
+    }
+    setPeriodMode(mode);
+    setCurrentMonth(getCurrentPeriodLabel(mode, paydayOverrides));
+  };
+
+  const handleSetPayday = async (paydayMonth: string, payday: string | null) => {
+    await setPaydayOverride(paydayMonth, payday);
+    setPaydayOverrides(prev => {
+      const next = { ...prev };
+      if (payday) next[paydayMonth] = payday;
+      else delete next[paydayMonth];
+      return next;
+    });
+  };
+
   const handleSavePin = (pin: string) => {
     localStorage.setItem('smart_ledger_pin', pin);
     setSavedPin(pin);
@@ -167,7 +227,10 @@ export const App: React.FC = () => {
       {/* 헤더 */}
       <Header
         currentMonth={currentMonth}
-        onChangeMonth={setCurrentMonth}
+        onChangeMonth={handleChangeMonth}
+        periodStart={periodRange.start}
+        periodEnd={periodRange.end}
+        onOpenPeriodSettings={() => setIsPeriodSettingsOpen(true)}
         viewMode={viewMode}
         onToggleViewMode={() => setViewMode(prev => (prev === 'mobile' ? 'desktop' : 'mobile'))}
         onLock={() => setIsLocked(true)}
@@ -240,6 +303,8 @@ export const App: React.FC = () => {
             }}
             onDeleteTransaction={handleDeleteTx}
             currentMonth={currentMonth}
+            periodStart={periodRange.start}
+            periodEnd={periodRange.end}
           />
         )}
       </main>
@@ -259,6 +324,17 @@ export const App: React.FC = () => {
         }}
         transaction={editingTx}
         categories={categories}
+      />
+
+      <PeriodSettingsModal
+        isOpen={isPeriodSettingsOpen}
+        onClose={() => setIsPeriodSettingsOpen(false)}
+        periodMode={periodMode}
+        onChangePeriodMode={handleChangePeriodMode}
+        currentMonth={currentMonth}
+        periodStart={periodRange.start}
+        paydayOverrides={paydayOverrides}
+        onSetPayday={handleSetPayday}
       />
 
       <PinLockModal

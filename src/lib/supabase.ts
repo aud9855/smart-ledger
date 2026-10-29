@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { Transaction, Category, Budget } from '../types';
-import { getLocalMonthRange } from './date';
+import { PaydayOverrides } from './date';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
@@ -15,15 +15,13 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 // 거래 내역 (Transactions) API
 // ==========================================
 
-export async function getTransactionsByMonth(yearMonth: string): Promise<Transaction[]> {
-  // yearMonth format: 'YYYY-MM' (로컬 시간대 기준 월 범위)
-  const { start: startDate, end: endDate } = getLocalMonthRange(yearMonth);
-
+/** [start, end) 기간의 거래 내역 (start/end는 getPeriodRange의 로컬 시간대 기준 Date) */
+export async function getTransactionsInRange(start: Date, end: Date): Promise<Transaction[]> {
   const { data, error } = await supabase
     .from('transactions')
     .select('*')
-    .gte('transacted_at', startDate)
-    .lt('transacted_at', endDate)
+    .gte('transacted_at', start.toISOString())
+    .lt('transacted_at', end.toISOString())
     .order('transacted_at', { ascending: false });
 
   if (error) {
@@ -128,6 +126,34 @@ export async function setBudgetForMonth(yearMonth: string, amount: number): Prom
 
   if (error) {
     console.error('예산 설정 실패:', error);
+    throw error;
+  }
+}
+
+// ==========================================
+// 월급날 직접 수정 (Payday Overrides) API
+// payday_overrides 테이블은 schema_payday.sql로 생성
+// ==========================================
+
+export async function getPaydayOverrides(): Promise<PaydayOverrides> {
+  const { data, error } = await supabase.from('payday_overrides').select('month, payday');
+
+  if (error) {
+    // 테이블이 아직 없으면 자동 계산(마지막 평일)만 사용
+    console.warn('월급날 수정 내역 조회 실패 (schema_payday.sql 실행 여부 확인):', error);
+    return {};
+  }
+  return Object.fromEntries((data || []).map(row => [row.month, row.payday]));
+}
+
+/** payday가 null이면 수정 내역을 지우고 자동 계산(마지막 평일)으로 되돌린다 */
+export async function setPaydayOverride(month: string, payday: string | null): Promise<void> {
+  const { error } = payday
+    ? await supabase.from('payday_overrides').upsert({ month, payday }, { onConflict: 'month' })
+    : await supabase.from('payday_overrides').delete().eq('month', month);
+
+  if (error) {
+    console.error('월급날 수정 실패:', error);
     throw error;
   }
 }

@@ -9,10 +9,16 @@ import {
   Download,
 } from 'lucide-react';
 import { usePwaInstall, shouldOfferInstall, requestInstall } from '../lib/pwa';
+import { shiftMonth } from '../lib/date';
+
+const formatShortDate = (d: Date) => `${d.getMonth() + 1}/${d.getDate()}`;
 
 interface HeaderProps {
   currentMonth: string; // 'YYYY-MM'
   onChangeMonth: (newMonth: string) => void;
+  periodStart: Date;
+  periodEnd: Date; // 미포함
+  onOpenPeriodSettings: () => void;
   viewMode: 'mobile' | 'desktop';
   onToggleViewMode: () => void;
   onLock: () => void;
@@ -22,6 +28,9 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   currentMonth,
   onChangeMonth,
+  periodStart,
+  periodEnd,
+  onOpenPeriodSettings,
   viewMode,
   onToggleViewMode,
   onLock,
@@ -30,19 +39,12 @@ export const Header: React.FC<HeaderProps> = ({
   const pwa = usePwaInstall();
   const [year, month] = currentMonth.split('-').map(Number);
 
-  const handlePrevMonth = () => {
-    const prevDate = new Date(year, month - 2, 1);
-    const newY = prevDate.getFullYear();
-    const newM = String(prevDate.getMonth() + 1).padStart(2, '0');
-    onChangeMonth(`${newY}-${newM}`);
-  };
+  // periodEnd는 다음 기간 시작일(미포함)이므로 표시용 마지막 날은 하루 전
+  const lastDay = new Date(periodEnd);
+  lastDay.setDate(lastDay.getDate() - 1);
 
-  const handleNextMonth = () => {
-    const nextDate = new Date(year, month, 1);
-    const newY = nextDate.getFullYear();
-    const newM = String(nextDate.getMonth() + 1).padStart(2, '0');
-    onChangeMonth(`${newY}-${newM}`);
-  };
+  const handlePrevMonth = () => onChangeMonth(shiftMonth(currentMonth, -1));
+  const handleNextMonth = () => onChangeMonth(shiftMonth(currentMonth, 1));
 
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-slate-100 shadow-xs pt-[env(safe-area-inset-top,0px)]">
@@ -82,9 +84,19 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
-          <span className="px-2 sm:px-3 text-xs sm:text-sm font-bold text-slate-800 font-mono whitespace-nowrap">
-            {year}.{String(month).padStart(2, '0')}
-          </span>
+          {/* 연월 + 실제 집계 기간 (누르면 기간 설정) */}
+          <button
+            onClick={onOpenPeriodSettings}
+            className="px-1.5 sm:px-3 flex flex-col items-center leading-none rounded-lg hover:bg-white transition py-0.5"
+            title="집계 기간 설정"
+          >
+            <span className="text-xs sm:text-sm font-bold text-slate-800 font-mono whitespace-nowrap">
+              {year}.{String(month).padStart(2, '0')}
+            </span>
+            <span className="text-[9px] sm:text-[10px] text-slate-400 font-medium font-mono whitespace-nowrap mt-0.5">
+              {formatShortDate(periodStart)}~{formatShortDate(lastDay)}
+            </span>
+          </button>
           <button
             onClick={handleNextMonth}
             className="p-1 sm:p-1.5 rounded-lg sm:rounded-xl hover:bg-white text-slate-500 hover:text-slate-800 transition active:scale-95"
