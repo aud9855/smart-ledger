@@ -63,8 +63,8 @@ MacroDroid 홈 화면에서 **[매크로 추가 (+)]**를 누르고 상단 이�
    * **URL:** `https://uyafrivmhhyzicbnkhet.supabase.co/rest/v1/transactions`
    * **콘텐츠 유형 (Content-Type):** `application/json`
    * **요청 헤더:**
-     * `apikey`: `sb_publishable_kAi4vM-5sUepIFbvX-UGXw_B7P8woef`
-     * `Authorization`: `Bearer sb_publishable_kAi4vM-5sUepIFbvX-UGXw_B7P8woef`
+     * `apikey`: `<Publishable 키>` (Supabase → Project Settings → API Keys에서 복사)
+     * `Authorization`: `Bearer <Publishable 키>`
      * `Prefer`: `return=minimal`
    * **본문 내용 (Body):**
      ```json

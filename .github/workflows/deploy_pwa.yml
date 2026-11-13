@@ -35,6 +35,10 @@ jobs:
 
       - name: Build Web Application & PWA
         run: npm run build
+        env:
+          # .env는 저장소에 올리지 않으므로 GitHub Secrets에서 주입
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v4

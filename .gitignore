@@ -32,3 +32,8 @@ yarn-error.log*
 *.njsproj
 *.sln
 *.sw?
+
+# Secrets (실제 값은 .env.example을 복사해서 사용)
+.env
+.env.*
+!.env.example

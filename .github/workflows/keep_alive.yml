@@ -11,8 +11,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Ping Supabase Database
+        env:
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: |
-          curl -s -X GET "https://uyafrivmhhyzicbnkhet.supabase.co/rest/v1/categories?select=id&limit=1" \
-            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY || 'sb_publishable_kAi4vM-5sUepIFbvX-UGXw_B7P8woef' }}" \
-            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY || 'sb_publishable_kAi4vM-5sUepIFbvX-UGXw_B7P8woef' }}"
+          # 실패(401 등)하면 워크플로도 실패로 표시되도록 -f 사용
+          curl -sf -X GET "$SUPABASE_URL/rest/v1/categories?select=id&limit=1" \
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY" > /dev/null
           echo "Supabase Keep-Alive ping successfully sent!"
