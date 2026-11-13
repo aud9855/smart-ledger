@@ -21,7 +21,7 @@
 | **📱 스마트폰 PWA 웹앱 접속** | **[https://aud9855.github.io/smart-ledger/](https://aud9855.github.io/smart-ledger/)** | **보안 경고 0건 (추천 ⭐)**, 브라우저 접속 후 [홈 화면에 추가] 시 앱 설치 |
 | **🤖 안드로이드 설치 APK** | **[SmartLedger.apk 다운로드 (v1.0.2)](https://github.com/aud9855/smart-ledger/releases/download/v1.0.2/SmartLedger.apk)** | 신규 지갑 아이콘 적용 네이티브 APK 설치 파일 (5.9MB) |
 | **🖥️ PC용 실행 프로그램** | **[SmartLedger.exe 다운로드 (v1.0.2)](https://github.com/aud9855/smart-ledger/releases/download/v1.0.2/SmartLedger.exe)** | 설치 불필요, 다운로드 후 더블클릭 즉시 실행 (Windows 64-bit, 신규 전용 아이콘) |
-| **🤖 무인 자동화 가이드** | **[MacroDroid 설정 가이드](./MACRODROID_GUIDE.md)** | 토스/카드 알림 수신 시 폰 안 켜도 자동 등록 (3분 중복 제거 포함) |
+| **🤖 무인 자동화 가이드** | **[MacroDroid 설정 가이드](./MACRODROID_GUIDE.md)** | ⏸️ **현재 미사용** — 결제 알림을 받으면 자동 등록하던 기능 (문서만 보관) |
 | **📦 GitHub 통합 릴리즈** | **[GitHub Releases](https://github.com/aud9855/smart-ledger/releases)** | 최신 릴리즈 및 파일 배포 내역 |
 | **☁️ Supabase 콘솔** | **[Supabase Project Console](https://supabase.com/dashboard/project/uyafrivmhhyzicbnkhet)** | 가계부 클라우드 데이터베이스 콘솔 |
 
@@ -29,7 +29,7 @@
 
 ## ✨ 핵심 기능
 
-* **🤖 무인 자동 결제 등록 (MacroDroid):**
+* **🤖 무인 자동 결제 등록 (MacroDroid) — ⏸️ 현재 미사용:**
   * 결제 알림(토스, 카카오페이, 카드 승인 문자) 도착 시 **폰을 켜지 않아도 0.1초 만에 DB 자동 적재**
   * **3분 타임 윈도우 중복 방지:** 토스 알림과 카드사 문자가 동시 도착해도 1건만 깔끔히 저장
   * **상호명 기반 자동 카테고리 매핑:** 스타벅스/메가커피→카페, 배민/식당→식비, CU/GS25→편의점/마트 자동 분류
@@ -61,7 +61,7 @@ flowchart TD
         RT["Realtime Engine (WebSocket)"]
     end
 
-    subgraph Auto["🤖 스마트폰 무인 자동화 (MacroDroid)"]
+    subgraph Auto["🤖 스마트폰 무인 자동화 (MacroDroid, 현재 미사용)"]
         MD["알림 수신 감지\n(토스/카카오/카드문자)\n• 금액 및 상호명 추출"]
     end
 
@@ -120,7 +120,7 @@ flowchart TD
 ### 4. 무인 스마트 자동화 (Smart Automation)
 | 도구 / 기능 | 환경 | 역할 및 특징 |
 | :--- | :--- | :--- |
-| **MacroDroid** | Android (무료) | 화면 꺼짐 상태에서도 **토스(Toss) 결제 알림** 감지 시 0.1초 Supabase REST API 직송 |
+| **MacroDroid** (⏸️ 현재 미사용) | Android (무료) | 화면 꺼짐 상태에서도 **토스(Toss) 결제 알림** 감지 시 0.1초 Supabase REST API 직송 |
 | **GitHub Actions Cron** | v4 Workflows | 3일 주기 자동 Ping 전송으로 무료 티어 Supabase DB 영구 활성(잠듦 방지) 유지 |
 
 ---

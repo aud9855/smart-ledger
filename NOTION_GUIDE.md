@@ -12,14 +12,16 @@
 | :--- | :--- | :--- |
 | **📱 스마트폰 PWA 앱 접속** | [https://aud9855.github.io/smart-ledger/](https://aud9855.github.io/smart-ledger/) | **보안 경고 0건**, 브라우저 접속 후 [홈 화면에 추가] 누르면 즉시 앱 설치 |
 | **🖥️ PC용 실행 프로그램** | [SmartLedger.exe 다운로드](https://github.com/aud9855/smart-ledger/releases/download/v1.0.1/SmartLedger.exe) | 설치 불필요, 더블클릭 즉시 실행 (윈도우 포터블) |
-| **🤖 무인 자동화 가이드** | [MacroDroid 설정 가이드](./MACRODROID_GUIDE.md) | 결제 알림 올 때 폰 안 켜도 자동 등록 (중복 제거 포함) |
+| **🤖 무인 자동화 가이드** | [MacroDroid 설정 가이드](./MACRODROID_GUIDE.md) | ⏸️ 현재 미사용 (문서만 보관) |
 | **📦 GitHub 통합 릴리즈** | [GitHub Releases v1.0.1](https://github.com/aud9855/smart-ledger/releases/tag/v1.0.1) | 최신 빌드 파일 배포 페이지 |
 | **💻 GitHub 소스코드** | [aud9855/smart-ledger](https://github.com/aud9855/smart-ledger) | 전체 소스코드 저장소 |
 | **☁️ Supabase 클라우드** | [Supabase 콘솔 바로가기](https://supabase.com/dashboard/project/uyafrivmhhyzicbnkhet) | 24시간 가계부 데이터베이스 |
 
 ---
 
-## 🤖 1. 무인 자동 등록: 결제 알림 오면 폰 안 켜도 등록 (⭐️ 최고 편함)
+## 🤖 1. 무인 자동 등록: 결제 알림 오면 폰 안 켜도 등록 — ⏸️ 현재 미사용
+
+> MacroDroid 자동 등록은 지금 쓰지 않습니다. 중복 방지·자동 분류 SQL(`schema_automation.sql`)은 직접 입력할 때도 작동하므로 그대로 둡니다.
 
 1. **Supabase 중복 방지 & 자동 분류 SQL 실행 (최초 1회):**
    * [Supabase SQL Editor](https://supabase.com/dashboard/project/uyafrivmhhyzicbnkhet/sql/new)에서 저장소의 `schema_automation.sql`을 실행합니다.
@@ -62,4 +64,4 @@
 * **🎨 Frontend:** React `v19.0.0`, TypeScript `v5.7.3`, Vite `v6.1.0`, Tailwind CSS `v3.4.17`, Recharts `v2.15.1`, Lucide React `v0.475.0`, Pretendard `v1.3.9`
 * **☁️ Backend & DB:** Supabase Cloud (`@supabase/supabase-js v2.49.1`), PostgreSQL `v15+`, PL/pgSQL 중복 방지 & 자동 분류 트리거
 * **📦 Cross-Platform:** PWA (Service Worker `v2`), Electron `v44.7.0` (`SmartLedger.exe`), Capacitor `v8.5.3` (`SmartLedger.apk`), GitHub Pages (24/7 HTTPS)
-* **🤖 Automation:** MacroDroid (토스 결제 알림 무인 파싱 및 REST API 직송), GitHub Actions (매 3일 DB 잠듦 방지 Ping)
+* **🤖 Automation:** MacroDroid (토스 결제 알림 무인 파싱 및 REST API 직송, ⏸️ 현재 미사용), GitHub Actions (매 3일 DB 잠듦 방지 Ping)
