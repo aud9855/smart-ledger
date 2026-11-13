@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { Transaction, Category, Budget } from '../types';
+import { Transaction, Category, Budget, AccountBalance } from '../types';
 import { PaydayOverrides } from './date';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
@@ -154,6 +154,44 @@ export async function setPaydayOverride(month: string, payday: string | null): P
 
   if (error) {
     console.error('월급날 수정 실패:', error);
+    throw error;
+  }
+}
+
+// ==========================================
+// 계좌별 잔액 (Accounts) API
+// accounts 테이블과 account_balances 뷰는 schema_accounts.sql로 생성
+// ==========================================
+
+/** 테이블이 아직 없으면 null (화면에서 SQL 실행 안내) */
+export async function getAccountBalances(): Promise<AccountBalance[] | null> {
+  const { data, error } = await supabase
+    .from('account_balances')
+    .select('name, base_balance, base_at, balance, tx_count')
+    .order('order_num', { ascending: true });
+
+  if (error) {
+    console.warn('계좌 잔액 조회 실패 (schema_accounts.sql 실행 여부 확인):', error);
+    return null;
+  }
+  // bigint 합계는 문자열로 올 수 있으므로 숫자로 변환
+  return (data || []).map(row => ({
+    name: row.name,
+    base_balance: Number(row.base_balance),
+    base_at: row.base_at,
+    balance: Number(row.balance),
+    tx_count: Number(row.tx_count),
+  }));
+}
+
+/** 지금 실제 잔액을 입력: 이 시각 이후 거래만 더하고 빼서 잔액을 계산하게 됨 */
+export async function setAccountBalance(name: string, balance: number): Promise<void> {
+  const { error } = await supabase
+    .from('accounts')
+    .upsert({ name, base_balance: balance, base_at: new Date().toISOString() }, { onConflict: 'name' });
+
+  if (error) {
+    console.error('잔액 설정 실패:', error);
     throw error;
   }
 }

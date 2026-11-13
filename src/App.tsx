@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Transaction, Category, TransactionType, PaymentMethod } from './types';
+import { Transaction, Category, TransactionType, PaymentMethod, AccountBalance } from './types';
 import {
   PeriodMode,
   PaydayOverrides,
@@ -17,6 +17,8 @@ import {
   getCategories,
   getBudgetByMonth,
   setBudgetForMonth,
+  getAccountBalances,
+  setAccountBalance,
 } from './lib/supabase';
 import { Header } from './components/Header';
 import { MobileQuickInput } from './components/MobileQuickInput';
@@ -26,6 +28,7 @@ import { TransactionModal } from './components/TransactionModal';
 import { PinLockModal } from './components/PinLockModal';
 import { PwaInstallPrompt } from './components/PwaInstallPrompt';
 import { PeriodSettingsModal } from './components/PeriodSettingsModal';
+import { AccountBalances } from './components/AccountBalances';
 import { PlusCircle, ListOrdered, Loader2 } from 'lucide-react';
 
 const PERIOD_MODE_KEY = 'smart_ledger_period_mode';
@@ -57,6 +60,8 @@ export const App: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [budget, setBudget] = useState<number>(0);
+  // 계좌별 현재 잔액 (기간과 무관), null이면 accounts 테이블 없음
+  const [accountBalances, setAccountBalances] = useState<AccountBalance[] | null>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [isRealtimeConnected, setIsRealtimeConnected] = useState<boolean>(false);
 
@@ -113,13 +118,15 @@ export const App: React.FC = () => {
       const requestId = ++latestRequestRef.current;
       if (showSpinner) setLoading(true);
       try {
-        const [txList, budgetAmount] = await Promise.all([
+        const [txList, budgetAmount, balances] = await Promise.all([
           getTransactionsInRange(periodRange.start, periodRange.end),
           getBudgetByMonth(currentMonth),
+          getAccountBalances(),
         ]);
         if (requestId !== latestRequestRef.current) return;
         setTransactions(txList);
         setBudget(budgetAmount);
+        setAccountBalances(balances);
       } catch (err) {
         console.error('데이터 조회 오류:', err);
       } finally {
@@ -188,6 +195,11 @@ export const App: React.FC = () => {
     setBudget(amount);
   };
 
+  const handleSetAccountBalance = async (name: string, balance: number) => {
+    await setAccountBalance(name, balance);
+    setAccountBalances(await getAccountBalances());
+  };
+
   const handleChangeMonth = (month: string) => {
     monthTouchedRef.current = true;
     setCurrentMonth(month);
@@ -251,14 +263,21 @@ export const App: React.FC = () => {
                 onSubmit={handleCreateTx}
               />
             ) : (
-              <MobileRecentFeed
-                transactions={transactions}
-                onDelete={handleDeleteTx}
-                onEdit={tx => {
-                  setEditingTx(tx);
-                  setIsTxModalOpen(true);
-                }}
-              />
+              <div className="space-y-3">
+                <AccountBalances
+                  balances={accountBalances}
+                  onSetBalance={handleSetAccountBalance}
+                  compact
+                />
+                <MobileRecentFeed
+                  transactions={transactions}
+                  onDelete={handleDeleteTx}
+                  onEdit={tx => {
+                    setEditingTx(tx);
+                    setIsTxModalOpen(true);
+                  }}
+                />
+              </div>
             )}
 
             {/* 모바일 하단 내비게이션 바 (Safe Area 대응) */}
@@ -302,6 +321,8 @@ export const App: React.FC = () => {
               setIsTxModalOpen(true);
             }}
             onDeleteTransaction={handleDeleteTx}
+            accountBalances={accountBalances}
+            onSetAccountBalance={handleSetAccountBalance}
             currentMonth={currentMonth}
             periodStart={periodRange.start}
             periodEnd={periodRange.end}

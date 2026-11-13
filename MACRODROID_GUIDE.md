@@ -72,9 +72,10 @@ MacroDroid 홈 화면에서 **[매크로 추가 (+)]**를 누르고 상단 이�
        "type": "expense",
        "amount": {lv=amount},
        "memo": "{lv=memo}",
-       "payment_method": "토스"
+       "payment_method": "신한"
      }
      ```
+   * `payment_method`에는 돈이 빠져나가는 곳을 `우체국` / `신한` / `카카오페이` / `현금` 중 하나로 정확히 적어야 계좌별 잔액에 반영됩니다. (알림 앱별로 매크로를 따로 만들어 값을 다르게 지정)
 
 ---
 
