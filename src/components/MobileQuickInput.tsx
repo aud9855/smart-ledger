@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TransactionType, PaymentMethod, Category } from '../types';
+import { TransactionType, PaymentMethod, Category, PAYMENT_METHODS } from '../types';
 import { CategoryIcon } from './CategoryIcon';
 import { buildTransactedAt, toLocalDateKey } from '../lib/date';
 import { DuplicateTransactionError } from '../lib/supabase';
@@ -18,13 +18,11 @@ interface MobileQuickInputProps {
   }) => Promise<void>;
 }
 
-const PAYMENT_METHODS: PaymentMethod[] = ['토스', '카카오페이', '신용카드', '체크카드', '계좌이체', '현금'];
-
 export const MobileQuickInput: React.FC<MobileQuickInputProps> = ({ categories, onSubmit }) => {
   const [type, setType] = useState<TransactionType>('expense');
   const [amountStr, setAmountStr] = useState<string>('0');
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('토스');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PAYMENT_METHODS[0]);
   const [memo, setMemo] = useState<string>('');
   const [date, setDate] = useState<string>(() => toLocalDateKey());
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);

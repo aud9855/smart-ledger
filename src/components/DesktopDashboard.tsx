@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Transaction, Category } from '../types';
+import { Transaction, Category, AccountBalance, PAYMENT_METHODS } from '../types';
+import { AccountBalances } from './AccountBalances';
 import { CategoryIcon } from './CategoryIcon';
 import { toLocalDateKey } from '../lib/date';
 import {
@@ -35,6 +36,8 @@ interface DesktopDashboardProps {
   onAddTransaction: () => void;
   onEditTransaction: (tx: Transaction) => void;
   onDeleteTransaction: (id: string) => void;
+  accountBalances: AccountBalance[] | null;
+  onSetAccountBalance: (name: string, balance: number) => Promise<void>;
   currentMonth: string;
   periodStart: Date;
   periodEnd: Date; // 미포함
@@ -47,6 +50,8 @@ export const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
   onAddTransaction,
   onEditTransaction,
   onDeleteTransaction,
+  accountBalances,
+  onSetAccountBalance,
   currentMonth,
   periodStart,
   periodEnd,
@@ -149,6 +154,15 @@ export const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
     });
   }, [transactions, typeFilter, methodFilter, searchQuery]);
 
+  // 결제수단 필터: 기본 4개 + 이 기간에 있는 예전 결제수단
+  const methodOptions = useMemo(() => {
+    const extra = new Set<string>();
+    transactions.forEach(t => {
+      if (!(PAYMENT_METHODS as readonly string[]).includes(t.payment_method)) extra.add(t.payment_method);
+    });
+    return [...PAYMENT_METHODS, ...Array.from(extra).sort()];
+  }, [transactions]);
+
   // CSV 엑셀 다운로드
   const handleExportCSV = () => {
     if (filteredTransactions.length === 0) {
@@ -192,6 +206,9 @@ export const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
 
   return (
     <div className="space-y-6 pb-12 max-w-7xl mx-auto px-4 sm:px-6">
+      {/* 0. 계좌별 현재 잔액 */}
+      <AccountBalances balances={accountBalances} onSetBalance={onSetAccountBalance} />
+
       {/* 1. 상단 KPI 카드 그리드 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* 총 지출 */}
@@ -467,12 +484,9 @@ export const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
               className="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-700 outline-none"
             >
               <option value="all">결제수단: 전체</option>
-              <option value="토스">토스</option>
-              <option value="카카오페이">카카오페이</option>
-              <option value="신용카드">신용카드</option>
-              <option value="체크카드">체크카드</option>
-              <option value="계좌이체">계좌이체</option>
-              <option value="현금">현금</option>
+              {methodOptions.map(m => (
+                <option key={m} value={m}>{m}</option>
+              ))}
             </select>
           </div>
 

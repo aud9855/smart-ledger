@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Transaction, Category, TransactionType, PaymentMethod } from '../types';
+import { Transaction, Category, TransactionType, PAYMENT_METHODS } from '../types';
 import { X } from 'lucide-react';
 import { buildTransactedAt, toLocalDateKey } from '../lib/date';
 import { DuplicateTransactionError } from '../lib/supabase';
@@ -12,8 +12,6 @@ interface TransactionModalProps {
   categories: Category[];
 }
 
-const PAYMENT_METHODS: PaymentMethod[] = ['토스', '카카오페이', '신용카드', '체크카드', '계좌이체', '현금', '기타'];
-
 export const TransactionModal: React.FC<TransactionModalProps> = ({
   isOpen,
   onClose,
@@ -25,7 +23,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   const [amount, setAmount] = useState<number>(0);
   const [categoryName, setCategoryName] = useState<string>('');
   const [categoryId, setCategoryId] = useState<string>('');
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('토스');
+  const [paymentMethod, setPaymentMethod] = useState<string>(PAYMENT_METHODS[0]);
   const [memo, setMemo] = useState<string>('');
   const [date, setDate] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,7 +43,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
       const defaultCat = categories.find(c => c.type === 'expense');
       setCategoryName(defaultCat?.name || '식비');
       setCategoryId(defaultCat?.id || '');
-      setPaymentMethod('토스');
+      setPaymentMethod(PAYMENT_METHODS[0]);
       setMemo('');
       setDate(toLocalDateKey());
     }
@@ -195,12 +193,16 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             <label className="block text-xs font-semibold text-slate-500 mb-1">결제 수단</label>
             <select
               value={paymentMethod}
-              onChange={e => setPaymentMethod(e.target.value as PaymentMethod)}
+              onChange={e => setPaymentMethod(e.target.value)}
               className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 text-sm outline-none focus:border-indigo-500 focus:bg-white transition"
             >
               {PAYMENT_METHODS.map(m => (
                 <option key={m} value={m}>{m}</option>
               ))}
+              {/* 예전 결제수단(토스 등)으로 저장된 거래는 그 값도 선택지에 남겨 둠 */}
+              {!(PAYMENT_METHODS as readonly string[]).includes(paymentMethod) && (
+                <option value={paymentMethod}>{paymentMethod} (예전 수단)</option>
+              )}
             </select>
           </div>
 

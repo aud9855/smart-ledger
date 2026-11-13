@@ -63,8 +63,8 @@ MacroDroid 홈 화면에서 **[매크로 추가 (+)]**를 누르고 상단 이�
    * **URL:** `https://uyafrivmhhyzicbnkhet.supabase.co/rest/v1/transactions`
    * **콘텐츠 유형 (Content-Type):** `application/json`
    * **요청 헤더:**
-     * `apikey`: `sb_publishable_kAi4vM-5sUepIFbvX-UGXw_B7P8woef`
-     * `Authorization`: `Bearer sb_publishable_kAi4vM-5sUepIFbvX-UGXw_B7P8woef`
+     * `apikey`: `<Publishable 키>` (Supabase → Project Settings → API Keys에서 복사)
+     * `Authorization`: `Bearer <Publishable 키>`
      * `Prefer`: `return=minimal`
    * **본문 내용 (Body):**
      ```json
@@ -72,9 +72,10 @@ MacroDroid 홈 화면에서 **[매크로 추가 (+)]**를 누르고 상단 이�
        "type": "expense",
        "amount": {lv=amount},
        "memo": "{lv=memo}",
-       "payment_method": "토스"
+       "payment_method": "신한"
      }
      ```
+   * `payment_method`에는 돈이 빠져나가는 곳을 `우체국` / `신한` / `카카오페이` / `현금` 중 하나로 정확히 적어야 계좌별 잔액에 반영됩니다. (알림 앱별로 매크로를 따로 만들어 값을 다르게 지정)
 
 ---
 

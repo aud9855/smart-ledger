@@ -52,7 +52,7 @@
 ## 🔑 4. 클라우드 DB 접속 정보 (보관용)
 
 * **Supabase URL:** `https://uyafrivmhhyzicbnkhet.supabase.co`
-* **Publishable Anon Key:** `sb_publishable_kAi4vM-5sUepIFbvX-UGXw_B7P8woef`
+* **Publishable Anon Key:** 저장소에 적지 않음 — Supabase → Project Settings → API Keys에서 확인 (로컬은 `.env`, 배포는 GitHub Secrets `VITE_SUPABASE_ANON_KEY`)
 * **7일 미사용 방지 자동화:** 매 3일마다 GitHub Actions(`.github/workflows/keep_alive.yml`)가 자동으로 핑을 보내 무료 티어 DB가 잠들지 않도록 영구 유지합니다.
 
 ---
